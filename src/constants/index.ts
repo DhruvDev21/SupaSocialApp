@@ -1,0 +1,2 @@
+export const supabaseUrl ="https://rlpohfgcbfnsspchtcgj.supabase.co";
+export const supabaseAnonKey ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJscG9oZmdjYmZuc3NwY2h0Y2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyNzc1NTMsImV4cCI6MjA1NDg1MzU1M30.O_iEwEOkGcWRVUjgQziPvZWSCn4f-YC2GGGSdSETe0M";
