@@ -11,6 +11,7 @@ export type User = {
   image: string | any;
   bio: string;
   address: string;
+  email?: string;
 };
 
 export type mediaType = {

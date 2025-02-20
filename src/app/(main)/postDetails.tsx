@@ -24,14 +24,14 @@ import Icon from "@/assets/icons";
 import CommentItem from "@/src/components/CommentItem";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/src/services/userService";
-import { createNotification } from "@/src/services/notificationService";
+import { createNotification, NotificationPayload } from "@/src/services/notificationService";
 import ScreenWrapper from "@/src/components/ScreenWrapper";
 
 interface Comment {
   id: string;
   userId: string;
   text: string;
-  user: any; // You can define the type for 'user' if available
+  user: any;
 }
 
 interface Payload {
@@ -47,9 +47,13 @@ const PostDetails = () => {
   const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
   const navigation = useRouter();
-  const inputRef = useRef(null);
+  const inputRef = useRef<any>(null);
   const commentRef = useRef("");
-  const [post, setPost] = useState<postData>(null);
+  const [post, setPost] = useState<postData>({
+    id: "",
+    userid: "",
+    comments: [],
+  });
   const [loading, setLoading] = useState(true);
   const [commentLoading, setCommentLoading] = useState(false);
 
@@ -97,37 +101,37 @@ const PostDetails = () => {
   };
 
   const onNewComment = async () => {
-    if (!commentRef.current) return null;
-
+    if (!commentRef.current || !user?.id) return;
+  
     let data = {
-      userId: user?.id,
+      userId: user.id,
       postId: post?.id,
       text: commentRef.current,
     };
-
+  
     setCommentLoading(true);
     let res = await createComment(data);
-    console.log("the comment respnse", res);
     setCommentLoading(false);
+  
     if (res.success) {
-      if (!user?.id) return;
-
-      if (user.id != post.userid) {
-        let notify = {
+      if (user.id !== post.userid) {
+        let notify: NotificationPayload = {
           senderId: user.id,
           receiverId: post.userid,
-          title: "commented on your Post",
+          title: "New Comment on Your Post",
+          message: "Someone commented on your post!",
           data: JSON.stringify({ postId: post.id, commentId: res?.data?.id }),
+          type: "comment",
         };
         createNotification(notify);
       }
+  
       inputRef?.current?.clear();
       commentRef.current = "";
     } else {
-      Alert.alert("comment", res.msg);
+      Alert.alert("Comment", res.msg);
     }
   };
-
   const onDeleteComment = async (comment: any) => {
     let res = await removeComment(comment?.id);
     console.log("remove comment response", res);
@@ -193,7 +197,7 @@ const PostDetails = () => {
             showMoreIcon={false}
             showDelete={true}
             onDelete={onDeletepost}
-            onEdit={onEditPost}
+            onEdit={() => onEditPost(post)}
           />
 
           <View style={styles.inputContainer}>
@@ -220,12 +224,14 @@ const PostDetails = () => {
           </View>
 
           <View style={{ marginVertical: 15, gap: 17 }}>
-            {post?.comments?.map((comment:Comment) => (
+            {post?.comments?.map((comment: Comment) => (
               <CommentItem
                 key={comment?.id.toString()}
                 item={comment}
-                canDelete={user.id === comment.userId || user.id == post.userId}
-                onDelete={onDeleteComment}
+                canDelete={
+                  user?.id === comment.userId || user?.id == post.userid
+                }
+                onDelete={() => onDeleteComment(comment)}
                 highlight={comment.id == commentId}
               />
             ))}

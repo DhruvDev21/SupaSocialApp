@@ -7,7 +7,15 @@ import {
 } from "react-native-pell-rich-editor";
 import { theme } from "../constants/theme";
 
-const RichTextEditor = ({ onChange, editorRef }) => {
+interface RichTextEditorProps {
+  onChange: (text: string) => void;
+  editorRef: React.RefObject<RichEditor> | any;
+}
+
+const RichTextEditor: React.FC<RichTextEditorProps> = ({
+  onChange,
+  editorRef,
+}) => {
   return (
     <View style={{ minHeight: 285 }}>
       <RichToolbar
@@ -27,14 +35,14 @@ const RichTextEditor = ({ onChange, editorRef }) => {
           actions.heading4,
         ]}
         iconMap={{
-          [actions.heading1]: ({ tintColor }) => (
+          [actions.heading1]: ({ tintColor }: { tintColor: string }) => (
             <Text style={{ color: tintColor }}>H1</Text>
           ),
-          [actions.heading4]: ({ tintColor }) => (
+          [actions.heading4]: ({ tintColor }: { tintColor: string }) => (
             <Text style={{ color: tintColor }}>H4</Text>
           ),
         }}
-        style={styles.richBar}
+        style={[styles.richBar, { placeholderColor: "gray" }]}
         flatConatainerStyle={styles.flatStyle}
         selectedIconTint={theme.colors.primaryDark}
         editor={editorRef}
@@ -71,7 +79,6 @@ const styles = StyleSheet.create({
   },
   contentStyle: {
     color: theme.colors.textDark,
-    placeholderColor: "gray",
   },
   flatStyle: {
     gap: 5,

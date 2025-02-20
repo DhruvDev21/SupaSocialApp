@@ -11,6 +11,7 @@ import Input from "../components/input";
 import Button from "../components/Button";
 import { ErrorState } from "../constants/type";
 import { supabase } from "@/lib/supabase";
+import * as Notifications from "expo-notifications";
 
 const login = () => {
   const navigation = useRouter();
@@ -20,7 +21,7 @@ const login = () => {
   const [error, setError] = useState<ErrorState>({
     emailError: "",
     passwordError: "",
-    logInError:"",
+    logInError: "",
   });
 
   const validateInputs = () => {
@@ -41,25 +42,79 @@ const login = () => {
     return isValid;
   };
 
+  const getPushToken = async (): Promise<string | null> => {
+    try {
+      // Request permissions for notifications
+      const { status } = await Notifications.getPermissionsAsync();
+      let finalStatus = status;
+
+      if (status !== "granted") {
+        const { status: newStatus } =
+          await Notifications.requestPermissionsAsync();
+        finalStatus = newStatus;
+      }
+
+      if (finalStatus !== "granted") {
+        console.warn("Push notification permission denied");
+        return null;
+      }
+
+      // Get the Expo push token
+      const pushToken = await Notifications.getExpoPushTokenAsync();
+      return pushToken.data;
+    } catch (error) {
+      console.error("Error fetching push token:", error);
+      return null;
+    }
+  };
+
   const onLogIn = async () => {
     if (validateInputs()) {
-      setLoading(true)
+      setLoading(true);
       try {
         let email = emailRef.current.trim();
         let password = passwordRef.current.trim();
-        const {error} = await supabase.auth.signInWithPassword({
+
+        // Authenticate user
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
-          password
-        })
-        setLoading(false)
+          password,
+        });
+
         if (error) {
           setError((prev) => ({ ...prev, logInError: error.message }));
-        } else {
-          setError({ emailError: "", passwordError: "", logInError: "" });
+          setLoading(false);
+          return;
         }
+
+        const userId = data.user?.id;
+        if (!userId) {
+          console.error("User ID not found after login");
+          setLoading(false);
+          return;
+        }
+
+        // Get Expo Push Token
+        const pushToken = await getPushToken();
+        if (pushToken) {
+          // Update push token in Supabase
+          const { error: updateError } = await supabase
+            .from("users")
+            .update({ expopushtoken: pushToken })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.error("Error updating push token:", updateError.message);
+          } else {
+            console.log("Push token updated successfully!");
+          }
+        }
+
+        setError({ emailError: "", passwordError: "", logInError: "" });
+        setLoading(false);
       } catch (e) {
-        console.error("error while loging", e);
-        setLoading(false)
+        console.error("Error while logging in", e);
+        setLoading(false);
       }
     }
   };

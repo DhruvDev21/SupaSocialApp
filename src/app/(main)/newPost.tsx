@@ -49,12 +49,13 @@ const NewPost = () => {
 
   useEffect(() => {
     if (post && post.id) {
-      bodyRef.current = Array.isArray(post.body) ? post.body[0] : post.body || "";
+      bodyRef.current = Array.isArray(post.body)
+        ? post.body[0]
+        : post.body || "";
       setFile(post?.file || null);
       editorRef?.current?.setContentHTML(bodyRef.current);
     }
   }, []);
-  
 
   const onPick = async (isImage: boolean) => {
     let mediaConfig: mediaType | any = {
@@ -118,13 +119,13 @@ const NewPost = () => {
       return;
     }
 
-    let data = {
+    let data: { file: any; body: string; userid: string | undefined; id?: string } = {
       file,
       body: bodyRef.current,
       userid: user?.id,
     };
 
-    if(post && post.id) data.id = post.id
+    if (post && post.id) data.id = Array.isArray(post.id) ? post.id[0] : post.id;
 
     setLoading(true);
     let res = await createOrUpdatePost(data);

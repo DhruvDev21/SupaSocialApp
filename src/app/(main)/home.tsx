@@ -1,10 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import ScreenWrapper from "@/src/components/ScreenWrapper";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -69,7 +64,7 @@ const Home = () => {
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
-  const handlePostEvent = async (payload: PostEventPayload) => {
+  const handlePostEvent = async (payload: PostEventPayload | any) => {
     if (payload.eventType == "INSERT" && payload?.new?.id) {
       const newPost = { ...payload.new };
       const res = await getUserData(newPost?.userid);
@@ -245,6 +240,14 @@ const Home = () => {
                 size={hp(3.2)}
                 strokeWidth={2}
                 color={theme.colors.text}
+              />
+            </Pressable>
+            <Pressable onPress={() => navigation.push("/(main)/userChatList")}>
+              <Icon
+                name={"ChatIcon"}
+                size={hp(3.2)}
+                strokeWidth={3}
+                color={theme.colors.textLight}
               />
             </Pressable>
             <Pressable onPress={() => navigation.push("/(main)/profile")}>

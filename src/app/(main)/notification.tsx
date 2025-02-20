@@ -33,7 +33,7 @@ const Notification = () => {
     if (!user?.id) return; // Ensure user.id is defined
 
     let res = await fetchNotification(user.id);
-    if (res.success) setNotifications(res.data ?? []);
+    if (res.sucess) setNotifications(res.data);
   };
 
   return (

@@ -15,22 +15,19 @@ import Button from "@/src/components/Button";
 import { updateUser } from "@/src/services/userService";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
-import { supabase } from "@/lib/supabase";
-import { decode } from "base64-arraybuffer";
 
 const EditProfile = () => {
   const { user: currentUser, setUserData }: any = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useRouter();
 
-  // Initialize user state properly
   const [user, setUser] = useState<User>({
     name: "",
     phoneNumber: "",
     image: null,
     bio: "",
     address: "",
+    email: currentUser.email,
   });
 
   useEffect(() => {
@@ -41,11 +38,10 @@ const EditProfile = () => {
         image: currentUser.image || null,
         bio: currentUser.bio || "",
         address: currentUser.address || "",
+        email: currentUser.email,
       });
     }
   }, [currentUser]);
-
-  // Ensure imageSource is defined only after user state is initialized
 
   const onPickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({

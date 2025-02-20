@@ -37,6 +37,28 @@ const tagsStyles = {
   },
 };
 
+interface User {
+  id: string;
+  name: string;
+  image: string;
+}
+
+interface Like {
+  userId: string;
+}
+
+interface PostCardProps {
+  item: any;
+  currentUser: User | any;
+  navigation: any;
+  hasShadow?: boolean;
+  showMoreIcon?: boolean;
+  showDelete?: boolean;
+  onDelete?: (item: any) => void;
+  onEdit?: (item: any) => void;
+  profileClick?: boolean;
+}
+
 const PostCard = ({
   item,
   currentUser,
@@ -46,7 +68,8 @@ const PostCard = ({
   showDelete = false,
   onDelete = () => {},
   onEdit = () => {},
-}) => {
+  profileClick = true,
+}: PostCardProps) => {
   // console.log("the item data", item.comments);
   const shadowStyle = {
     shadowOffset: {
@@ -84,7 +107,7 @@ const PostCard = ({
   const onLike = async () => {
     if (liked) {
       const updatedLikes = likes?.filter(
-        (like) => like?.userId != currentUser?.id
+        (like: any) => like?.userId != currentUser?.id
       );
       setLikes([...updatedLikes]);
       const res = await removePostLike(item?.id, currentUser?.id);
@@ -110,7 +133,9 @@ const PostCard = ({
 
   const onShare = async () => {
     setShareLoading(true);
-    let content = {};
+    let content: { title?: string; message: string; url?: string } = {
+      message: "",
+    };
 
     if (Platform.OS === "android") {
       content = {
@@ -139,9 +164,9 @@ const PostCard = ({
         setShareLoading(false);
         console.log("Share dismissed");
       }
-    } catch (error) {
+    } catch (error: any) {
       setShareLoading(false);
-      Alert.alert("Error", error.message);
+      Alert.alert("Error", error);
     }
   };
 
@@ -160,11 +185,11 @@ const PostCard = ({
     ]);
   };
 
-  const liked = likes?.filter((like) => like.userId == currentUser?.id)[0]
+  const liked: boolean = likes?.filter(
+    (like: Like) => like.userId == currentUser?.id
+  )[0]
     ? true
     : false;
-
-  console.log("post item", currentUser);
 
   const handelProfileClick = () => {
     navigation.push({
@@ -175,7 +200,11 @@ const PostCard = ({
   return (
     <View style={[styles.container, hasShadow && shadowStyle]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.userInfo} onPress={handelProfileClick}>
+        <TouchableOpacity
+          style={styles.userInfo}
+          onPress={handelProfileClick}
+          disabled={!profileClick ? true : false}
+        >
           <Avatar
             size={hp(4.5)}
             uri={item?.user?.image}

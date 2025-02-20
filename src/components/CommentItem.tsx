@@ -6,23 +6,46 @@ import Avatar from "./Avatar";
 import moment from "moment";
 import Icon from "@/assets/icons";
 
-const CommentItem = ({ item, canDelete = false,onDelete=()=>{},highlight=false }) => {
+interface User {
+  image: string;
+  name: string;
+}
+
+interface CommentItemProps {
+  item:
+    | {
+        created_at: string;
+        user: User;
+        text: string;
+      }
+    | any;
+  canDelete?: boolean;
+  onDelete?: (item: any) => void;
+  highlight?: boolean;
+}
+
+const CommentItem: React.FC<CommentItemProps> = ({
+  item,
+  canDelete = false,
+  onDelete = () => {},
+  highlight = false,
+}) => {
   const createdAt = moment(item?.created_at).format("MMM d");
 
-  const handleDelete =()=>{
-    Alert.alert('confirm','Are you sure you want to do this?',[
-        {
-            text:'Cancel',
-            onPress:()=>console.log(' modal cancelled'),
-            style:'cancel'
-        },
-        {
-            text:'Delete',
-            onPress:()=>onDelete(item),
-            style:'destructive'
-        }
-    ])
-  }
+  const handleDelete = () => {
+    Alert.alert("confirm", "Are you sure you want to do this?", [
+      {
+        text: "Cancel",
+        onPress: () => console.log(" modal cancelled"),
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        onPress: () => onDelete(item),
+        style: "destructive",
+      },
+    ]);
+  };
   return (
     <View style={styles.container}>
       <Avatar uri={item?.user?.image} />
