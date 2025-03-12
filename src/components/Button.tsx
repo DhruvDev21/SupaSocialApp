@@ -11,6 +11,7 @@ interface ButtonProps {
   onPress?: () => void;
   loading?: boolean;
   hasShadow?: boolean;
+  disabled?:boolean
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -20,6 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   onPress = () => {},
   loading = false,
   hasShadow = true,
+  disabled= false,
 }) => {
   const shadowStyle: ViewStyle = {
     shadowColor: theme.colors.dark,
@@ -41,6 +43,7 @@ const Button: React.FC<ButtonProps> = ({
     <Pressable
       onPress={onPress}
       style={[styles.button, btnStyle, hasShadow && shadowStyle]}
+      disabled={disabled}
     >
       <Text style={[styles.text, textStyle]}>{title}</Text>
     </Pressable>

@@ -49,24 +49,27 @@ const UserChatList = () => {
       const fetchChats = async () => {
         if (!loggedUser) return;
         setLoading(true);
-  
+
         const users = await fetchChatUsers(loggedUser.id as string);
         const unseenCounts: { [key: string]: number } = {};
-  
+
         for (const user of users) {
           if (user.chat_id) {
-            const count = await getUnseenMessagesCount(loggedUser.id as string, user.chat_id);
+            const count = await getUnseenMessagesCount(
+              loggedUser.id as string,
+              user.chat_id
+            );
             unseenCounts[user.id] = count;
           }
         }
-  
+
         setChatUsers(users);
         setUnseenMessages(unseenCounts);
         setLoading(false);
       };
-  
+
       fetchChats();
-  
+
       // **Listening for new messages**
       const messageChannel = supabase
         .channel("newMessages")
@@ -80,34 +83,33 @@ const UserChatList = () => {
           },
           async (payload) => {
             console.log("📩 New message received:", payload);
-  
+
             // Update unread messages count
             setUnseenMessages((prev) => ({
               ...prev,
               [payload.new.senderId]: (prev[payload.new.senderId] || 0) + 1,
             }));
-  
+
             // Send push notification
             const notificationPayload = {
               senderId: payload.new.senderId,
-              receiverId: loggedUser?.id,
+              receiverId: loggedUser?.id ?? "",
               title: "New Message",
               message: payload.new.text,
               data: JSON.stringify({ chatId: payload.new.chat_id }),
               type: "message",
             };
-  
+
             await createNotification(notificationPayload);
           }
         )
         .subscribe();
-  
+
       return () => {
         supabase.removeChannel(messageChannel);
       };
     }, [loggedUser])
   );
-  
 
   const onPressAddUser = () => {
     navigation.push("/(main)/newUserChat");
@@ -147,7 +149,19 @@ const UserChatList = () => {
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
-        <Header title="Chat" />
+        <View style={styles.headerContainer}>
+          <Header title="Chat" showBackButton={false} />
+          {/* {isCurrentUser && ( */}
+          <View style={{flexDirection:'row',gap:wp(2)}}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
+            <Icon name="addIcon" color={theme.colors.text} size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
+            <Icon name="threeDotsHorizontal" color={theme.colors.text} size={20} strokeWidth={4} />
+          </TouchableOpacity>
+          </View>
+          {/* )} */}
+        </View>
         {loading ? (
           <View style={styles.loadingContainer}>
             <Loading />
@@ -169,11 +183,11 @@ const UserChatList = () => {
         )}
       </View>
 
-      <View style={styles.addButtonContainer}>
+      {/* <View style={styles.addButtonContainer}>
         <Pressable style={styles.addIcon} onPress={onPressAddUser}>
           <Icon name={"addIcon"} color={"white"} strokeWidth={3} />
         </Pressable>
-      </View>
+      </View> */}
     </ScreenWrapper>
   );
 };
@@ -183,13 +197,29 @@ export default UserChatList;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: theme.colors.gray,
     paddingHorizontal: wp(4),
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  logoutBtn: {
+    height: hp(4),
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 4,
+    borderRadius: theme.radius.sm,
+    // backgroundColor: "#d7f7c7",
   },
   chatItem: {
     flexDirection: "row",
     paddingVertical: wp(2),
     alignItems: "center",
     gap: wp(3),
+    paddingHorizontal: wp(4),
   },
   messageContainer: {
     flex: 1,
@@ -240,6 +270,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     margin: 16,
+    marginBottom: 100,
   },
   addIcon: {
     backgroundColor: theme.colors.primary,

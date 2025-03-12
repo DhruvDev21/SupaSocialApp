@@ -214,7 +214,7 @@ const Home = () => {
     <ScreenWrapper bg="white">
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>LinkUp</Text>
+          <Text style={styles.title}>SupaSocial</Text>
           <View style={styles.icons}>
             <Pressable
               onPress={() => {
@@ -242,14 +242,14 @@ const Home = () => {
                 color={theme.colors.text}
               />
             </Pressable>
-            <Pressable onPress={() => navigation.push("/(main)/userChatList")}>
+            {/* <Pressable onPress={() => navigation.push("/(main)/userChatList")}>
               <Icon
                 name={"ChatIcon"}
                 size={hp(3.2)}
                 strokeWidth={3}
                 color={theme.colors.textLight}
               />
-            </Pressable>
+            </Pressable> */}
             <Pressable onPress={() => navigation.push("/(main)/profile")}>
               <Avatar
                 uri={user?.image}
@@ -270,11 +270,11 @@ const Home = () => {
           onEndReached={getPosts}
           ListFooterComponent={
             hasMore ? (
-              <View style={{ marginVertical: posts.length == 0 ? 300 : 30 }}>
+              <View style={{ marginVertical: posts.length == 0 ? 300 : 15 }}>
                 <Loading />
               </View>
             ) : (
-              <View style={{ marginVertical: 30 }}>
+              <View style={{ marginTop: 10,marginBottom:20 }}>
                 <Text style={styles.noPosts}>No more posts</Text>
               </View>
             )
@@ -293,8 +293,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
-    marginHorizontal: wp(4),
+    borderBottomWidth:1,
+    borderColor:theme.colors.gray,
+    paddingHorizontal:wp(4),
+    paddingBottom:wp(2)
   },
   title: {
     color: theme.colors.text,
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 18,
   },
-  listsStyle: { paddingTop: 20, paddingHorizontal: wp(4) },
+  listsStyle: { paddingTop: wp(4), paddingHorizontal: wp(4) },
   noPosts: { fontSize: hp(2), textAlign: "center", color: theme.colors.text },
   pill: {
     position: "absolute",

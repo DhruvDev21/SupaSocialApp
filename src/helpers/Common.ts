@@ -12,3 +12,5 @@ export const wp = (percentage: number) => {
 export const stripHtmlTags = (html: string) => {
   return html.replace(/<[^>]*>?/gm, "");
 };
+
+export const { width: screenWidth } = Dimensions.get("window");

@@ -1,10 +1,12 @@
-import { LogBox, StatusBar, StyleSheet, Text, View } from "react-native";
-import React, { useEffect } from "react";
-import { Stack, useRouter } from "expo-router";
+import { LogBox, StatusBar } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Slot, useRouter } from "expo-router";
+import { Provider } from "react-redux"; 
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "../services/userService";
 import { User } from "@supabase/supabase-js";
+import { store } from "../redux/store";
 
 LogBox.ignoreLogs([
   "Warning: TNodeChildrenRenderer",
@@ -12,30 +14,36 @@ LogBox.ignoreLogs([
   "Warning: TRenderEngineProvider",
 ]);
 
-const _layout = () => {
+const Layout = () => {
   return (
+    <Provider store={store}>
     <AuthProvider>
-      <StatusBar barStyle={'dark-content'} />
+      <StatusBar barStyle={"dark-content"} />
       <MainLayout />
     </AuthProvider>
+    </Provider>
   );
 };
 
 const MainLayout = () => {
   const { setAuth, setUserData } = useAuth();
   const navigation = useRouter();
+  const [loading, setLoading] = useState(true); // Track loading state
+
   useEffect(() => {
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("the user session:", session);
 
       if (session) {
         setAuth(session?.user);
-        updateUserData(session?.user, session?.user?.email ?? "");
-        navigation.replace("/(main)/home");
+        await updateUserData(session?.user, session?.user?.email ?? "");
+        navigation.replace("/(tabs)/home"); // Make sure this is the correct path
       } else {
         setAuth(null);
         navigation.replace("/welcome");
       }
+
+      setLoading(false); // Set loading to false after checking auth state
     });
   }, []);
 
@@ -45,18 +53,8 @@ const MainLayout = () => {
       setUserData({ ...res.data, email });
     }
   };
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen
-        name="/(main)/postDetails"
-        options={{
-          presentation: 'modal',
-        }}
-      />
-    </Stack>
-  );
+
+  return <Slot />;
 };
 
-export default _layout;
-
-const styles = StyleSheet.create({});
+export default Layout;

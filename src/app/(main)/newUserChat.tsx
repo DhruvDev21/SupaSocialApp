@@ -101,7 +101,15 @@ const NewUserChat = () => {
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
-        <Header title="New Chat" />
+        <View
+          style={{
+            borderBottomWidth: 1,
+            borderColor: theme.colors.gray,
+            paddingHorizontal: wp(4),
+          }}
+        >
+          <Header title="New Chat" />
+        </View>
 
         {loading ? (
           <View style={styles.loaderContainer}>
@@ -140,13 +148,12 @@ export default NewUserChat;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: wp(4),
-    gap: 10,
   },
   userContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 8,
+    marginVertical: wp(3),
+    paddingHorizontal: wp(4),
   },
   userName: {
     fontSize: 16,

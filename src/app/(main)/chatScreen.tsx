@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
+  BackHandler,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/src/components/Header";
 import Avatar from "@/src/components/Avatar";
 import { hp, wp } from "@/src/helpers/Common";
@@ -34,12 +35,29 @@ const ChatScreen: React.FC = () => {
   const { user } = useLocalSearchParams<{ user: string }>();
   const chatUser = user ? JSON.parse(user) : null;
   const { user: loggedUser } = useAuth();
+  const navigation = useRouter();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const flatListRef = useRef<FlatList>(null);
   const subscriptionRef = useRef<any>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        navigation.push("/(tabs)/userChatList"); // Navigate to user chat list screen
+        return true; // Prevent default behavior
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => backHandler.remove(); // Cleanup
+    }, [navigation])
+  );
 
   useEffect(() => {
     console.log("🚀 Fetching initial messages...");
@@ -147,6 +165,7 @@ const ChatScreen: React.FC = () => {
           containerStyles={{
             flex: 1,
             height: hp(6.3),
+            width: hp(35),
             borderRadius: theme.radius.xl,
           }}
           editable={!loading} // Disable input while loading
@@ -170,6 +189,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: wp(4),
     paddingVertical: wp(2),
+    borderBottomWidth: 1,
+    borderColor: theme.colors.gray,
   },
   messageContainer: {
     paddingHorizontal: wp(4),
@@ -209,7 +230,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingHorizontal: wp(4),
-    paddingVertical: wp(4),
+    paddingVertical: wp(3),
+    borderTopWidth: 1,
+    borderColor: theme.colors.gray,
   },
   sendIcon: {
     alignItems: "center",

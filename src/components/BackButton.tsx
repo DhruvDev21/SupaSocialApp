@@ -7,11 +7,16 @@ import { useRouter } from "expo-router";
 interface BackButtonProps {
   size?: number;
   navigation: ReturnType<typeof useRouter>;
+  onPress?:()=>void;
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ size = 26, navigation }) => {
+const BackButton: React.FC<BackButtonProps> = ({ size = 26, navigation,onPress }) => {
+
+  const backNavigation =()=>{
+    navigation.back()
+  }
   return (
-    <Pressable onPress={() => navigation.back()} style={styles.buttonStyle}>
+    <Pressable onPress={onPress ? onPress : backNavigation} style={styles.buttonStyle}>
       <Icon
         name={"arrowLeft"}
         strokeWidth={2.5}

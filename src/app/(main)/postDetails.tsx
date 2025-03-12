@@ -209,6 +209,7 @@ const PostDetails = () => {
               containerStyles={{
                 flex: 1,
                 height: hp(6.3),
+                width:hp(35),
                 borderRadius: theme.radius.xl,
               }}
             />

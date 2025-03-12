@@ -7,9 +7,10 @@ import { supabaseUrl } from "../constants";
 export const getUserImageSrc = (imagePath: string) => {
   if (imagePath) {
     return { uri: imagePath };
-  } else {
-    return require("../../assets/images/defaultUser.png");
-  }
+  } 
+  // else {
+  //   return require("../../assets/images/defaultuser.png");
+  // }
 };
 
 export const getSupabaseFileUrl = (filePath: string) => {

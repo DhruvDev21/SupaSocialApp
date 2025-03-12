@@ -68,3 +68,57 @@ export interface Comment {
   text: string;
   created_at?: string;
 }
+
+export interface Address {
+  id: string;
+  addressName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  created_at: string;
+}
+
+ export type Product = {
+  id: string;
+  name: string;
+  category: string;
+  subCategory: string;
+  price: number;
+  sizes?: string[];
+  color?: string[];
+};
+
+export interface item {
+  id:string;
+  category:string;
+  created_at:string;
+  description:string;
+  gender:string;
+  image_url:string;
+  name:string;
+  price:number;
+  quantity:number;
+  additional_images:string[];
+  sizes?: string[];
+  color?:string[];
+}
+
+export interface address {
+  addressName:string;
+  address:string;
+  city:string;
+  country:string;
+  state:string;
+  zip:number;
+}
+
+export type order = {
+  id: any;
+  address:address;
+  delivery_status:string;
+  delivery_date:string;
+  items:item[];
+  status:string;
+}

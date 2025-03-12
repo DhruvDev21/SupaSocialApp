@@ -10,16 +10,17 @@ interface HeaderProps {
   title: string;
   showBackButton?: boolean;
   mb?: number;
+  onPress?:()=>void
 }
 
-const Header: React.FC<HeaderProps> = ({ title, showBackButton = true, mb = 10 }) => {
+const Header: React.FC<HeaderProps> = ({ title, showBackButton = true, mb = 10,onPress }) => {
   const navigation = useRouter();
   
   return (
     <View style={[styles.container, { marginBottom: mb }]}>
       {showBackButton && (
         <View style={styles.backButton}>
-          <BackButton navigation={navigation} />
+          <BackButton navigation={navigation} onPress={onPress} />
         </View>
       )}
       <Text style={styles.title}>{title || ""}</Text>
