@@ -24,7 +24,10 @@ import Icon from "@/assets/icons";
 import CommentItem from "@/src/components/CommentItem";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/src/services/userService";
-import { createNotification, NotificationPayload } from "@/src/services/notificationService";
+import {
+  createNotification,
+  NotificationPayload,
+} from "@/src/services/notificationService";
 import ScreenWrapper from "@/src/components/ScreenWrapper";
 
 interface Comment {
@@ -102,17 +105,17 @@ const PostDetails = () => {
 
   const onNewComment = async () => {
     if (!commentRef.current || !user?.id) return;
-  
+
     let data = {
       userId: user.id,
       postId: post?.id,
       text: commentRef.current,
     };
-  
+
     setCommentLoading(true);
     let res = await createComment(data);
     setCommentLoading(false);
-  
+
     if (res.success) {
       if (user.id !== post.userid) {
         let notify: NotificationPayload = {
@@ -125,7 +128,7 @@ const PostDetails = () => {
         };
         createNotification(notify);
       }
-  
+
       inputRef?.current?.clear();
       commentRef.current = "";
     } else {
@@ -209,7 +212,7 @@ const PostDetails = () => {
               containerStyles={{
                 flex: 1,
                 height: hp(6.3),
-                width:hp(35),
+                width: hp(35),
                 borderRadius: theme.radius.xl,
               }}
             />

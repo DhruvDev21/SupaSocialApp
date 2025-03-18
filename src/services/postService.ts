@@ -126,7 +126,7 @@ export const createPostLike = async (postLike: PostLike) => {
 
 export const removePostLike = async (postId:string, userId:string) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("postLikes")
       .delete()
       .eq("userId", userId)
@@ -135,7 +135,8 @@ export const removePostLike = async (postId:string, userId:string) => {
       console.error("post like remove  error", error);
       return { success: false, msg: "could not remove the like in the post" };
     }
-    return { success: true };
+    console.log(' the data>>>>>>>>>',data)
+    return { data ,success: true };
   } catch (e) {
     console.error("post like remove  error", e);
     return { success: false, msg: "could not remove the like in the post" };

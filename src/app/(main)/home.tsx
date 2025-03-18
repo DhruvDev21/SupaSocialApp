@@ -8,7 +8,7 @@ import { theme } from "@/src/constants/theme";
 import Icon from "@/assets/icons";
 import { useRouter } from "expo-router";
 import Avatar from "@/src/components/Avatar";
-import { fetchPosts } from "@/src/services/postService";
+import { fetchPostDetails, fetchPosts } from "@/src/services/postService";
 import type {
   NotificationPayload,
   PostEventPayload,
@@ -21,6 +21,7 @@ import { getUserData } from "@/src/services/userService";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import React from "react";
+import eventEmitter from "@/src/utils/EventEmitter";
 
 var limit = 0;
 
@@ -65,18 +66,27 @@ const Home = () => {
   const responseListener = useRef<any>();
 
   const handlePostEvent = async (payload: PostEventPayload | any) => {
-    if (payload.eventType == "INSERT" && payload?.new?.id) {
-      const newPost = { ...payload.new };
-      const res = await getUserData(newPost?.userid);
-      newPost.postLikes = [];
-      newPost.comments = [{ count: 0 }];
-      newPost.user = res ? res.data : {};
-      setPosts((prevPost) => [newPost, ...prevPost]);
+    console.log("🚀 Post event received:", payload);
+
+    if (payload.eventType === "INSERT" && payload?.new?.id) {
+      setPosts((prevPost) => [payload.new, ...prevPost]);
     }
-    if (payload.eventType == "DELETE" && payload?.old?.id) {
-      setPosts((prevPost) => {
-        return prevPost.filter((post: postType) => post.id != payload?.old?.id);
-      });
+
+    if (payload.eventType === "DELETE" && payload?.old?.id) {
+      setPosts((prevPost) =>
+        prevPost.filter((post) => post.id !== payload.old.id)
+      );
+    }
+
+    if (payload.eventType === "UPDATE" && payload?.new?.id) {
+      const { data: updatedPost } = await fetchPostDetails(payload.new.id);
+      if (updatedPost) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === updatedPost.id ? updatedPost : post
+          )
+        );
+      }
     }
   };
 
@@ -152,6 +162,27 @@ const Home = () => {
       supabase.removeChannel(notificationChannel);
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    const handlePostLikeChange = ({
+      postId,
+      likes,
+    }: {
+      postId: string;
+      likes: any;
+    }) => {
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, postLikes: likes } : post
+        )
+      );
+    };
+    eventEmitter.on("postLikeChanged", handlePostLikeChange);
+
+    return () => {
+      eventEmitter.off("postLikeChanged", handlePostLikeChange);
+    };
+  }, []);
 
   const handleNewNotification = async (payload: NotificationPayload) => {
     console.log("You just received a new notification", payload);
@@ -242,14 +273,6 @@ const Home = () => {
                 color={theme.colors.text}
               />
             </Pressable>
-            {/* <Pressable onPress={() => navigation.push("/(main)/userChatList")}>
-              <Icon
-                name={"ChatIcon"}
-                size={hp(3.2)}
-                strokeWidth={3}
-                color={theme.colors.textLight}
-              />
-            </Pressable> */}
             <Pressable onPress={() => navigation.push("/(main)/profile")}>
               <Avatar
                 uri={user?.image}
@@ -274,7 +297,7 @@ const Home = () => {
                 <Loading />
               </View>
             ) : (
-              <View style={{ marginTop: 10,marginBottom:20 }}>
+              <View style={{ marginTop: 10, marginBottom: 20 }}>
                 <Text style={styles.noPosts}>No more posts</Text>
               </View>
             )
@@ -288,15 +311,17 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth:1,
-    borderColor:theme.colors.gray,
-    paddingHorizontal:wp(4),
-    paddingBottom:wp(2)
+    borderBottomWidth: 1,
+    borderColor: theme.colors.gray,
+    paddingHorizontal: wp(4),
+    paddingBottom: wp(2),
   },
   title: {
     color: theme.colors.text,
@@ -309,8 +334,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 18,
   },
-  listsStyle: { paddingTop: wp(4), paddingHorizontal: wp(4) },
-  noPosts: { fontSize: hp(2), textAlign: "center", color: theme.colors.text },
+  listsStyle: {
+    paddingTop: wp(4),
+    paddingHorizontal: wp(4),
+  },
+  noPosts: {
+    fontSize: hp(2),
+    textAlign: "center",
+    color: theme.colors.text,
+  },
   pill: {
     position: "absolute",
     right: -10,
@@ -322,5 +354,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: theme.colors.roseLight,
   },
-  pillText: { color: "white", fontSize: hp(1.2), fontWeight: theme.fonts.bold },
+  pillText: {
+    color: "white",
+    fontSize: hp(1.2),
+    fontWeight: theme.fonts.bold,
+  },
 });

@@ -152,13 +152,18 @@ const UserChatList = () => {
         <View style={styles.headerContainer}>
           <Header title="Chat" showBackButton={false} />
           {/* {isCurrentUser && ( */}
-          <View style={{flexDirection:'row',gap:wp(2)}}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
-            <Icon name="addIcon" color={theme.colors.text} size={20} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
-            <Icon name="threeDotsHorizontal" color={theme.colors.text} size={20} strokeWidth={4} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: wp(2) }}>
+            <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
+              <Icon name="addIcon" color={theme.colors.text} size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutBtn} onPress={onPressAddUser}>
+              <Icon
+                name="threeDotsHorizontal"
+                color={theme.colors.text}
+                size={20}
+                strokeWidth={4}
+              />
+            </TouchableOpacity>
           </View>
           {/* )} */}
         </View>
@@ -212,7 +217,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 4,
     borderRadius: theme.radius.sm,
-    // backgroundColor: "#d7f7c7",
   },
   chatItem: {
     flexDirection: "row",

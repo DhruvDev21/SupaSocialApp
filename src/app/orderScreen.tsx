@@ -77,10 +77,13 @@ const orderScreen = () => {
       });
     };
 
-    const statusStyles = statusStylesMock.reduce((acc: { [key: string]: any }, item) => {
-      acc[item.status] = item;
-      return acc;
-    }, {});
+    const statusStyles = statusStylesMock.reduce(
+      (acc: { [key: string]: any }, item) => {
+        acc[item.status] = item;
+        return acc;
+      },
+      {}
+    );
 
     const currentStatus = statusStyles[item.status] || statusStyles.pending;
 
@@ -118,19 +121,31 @@ const orderScreen = () => {
               />
               <View>
                 <Text style={styles.productName}>{productArray.name}</Text>
-                <View style={{flexDirection:'row',gap:wp(4)}}>
-                <Text style={styles.quantityText}>
-                  quantity: {productArray.quantity}
-                </Text>
-                {productArray.selectedSize && (
-                  <Text style={styles.quantityText}>Size: {productArray.selectedSize}</Text>
-                )}
+                <View style={{ flexDirection: "row", gap: wp(4) }}>
+                  <Text style={styles.quantityText}>
+                    quantity: {productArray.quantity}
+                  </Text>
+                  {productArray.selectedSize && (
+                    <Text style={styles.quantityText}>
+                      Size: {productArray.selectedSize}
+                    </Text>
+                  )}
                   {productArray.selectedColor && (
                     <>
-                                    <Text style={styles.price}>color:</Text>
-                    <View style={{backgroundColor:productArray.selectedColor,elevation:5,height:15,width:15,borderRadius:8,marginLeft:-10}}/>
-                    </>)}
-                  </View>
+                      <Text style={styles.quantityText}>color:</Text>
+                      <View
+                        style={{
+                          backgroundColor: productArray.selectedColor,
+                          elevation: 5,
+                          height: 15,
+                          width: 15,
+                          borderRadius: 8,
+                          marginLeft: -10,
+                        }}
+                      />
+                    </>
+                  )}
+                </View>
               </View>
             </View>
           ))}

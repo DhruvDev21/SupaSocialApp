@@ -36,6 +36,19 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
+        name="saved"
+        options={{
+          tabBarButton: (props) => (
+            <CustomTabButton
+              {...props}
+              iconName="unSaved"
+              isChat
+              iconSize={22}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="shopping"
         options={{
           tabBarButton: (props) => (
@@ -53,6 +66,7 @@ type CustomTabButtonProps = {
   onPress?: (event: GestureResponderEvent) => void;
   accessibilityState?: { selected?: boolean };
   isChat?: boolean;
+  iconSize?: number;
 };
 
 // Custom Floating Button Component with Proper Types
@@ -61,6 +75,7 @@ const CustomTabButton: React.FC<CustomTabButtonProps> = ({
   onPress,
   accessibilityState,
   isChat,
+  iconSize = 24,
 }) => {
   const isSelected = accessibilityState?.selected ?? false;
 
@@ -76,7 +91,7 @@ const CustomTabButton: React.FC<CustomTabButtonProps> = ({
       >
         <Icon
           name={iconName}
-          size={24}
+          size={iconSize}
           color={isSelected ? "white" : theme.colors.textLight}
         />
       </TouchableOpacity>

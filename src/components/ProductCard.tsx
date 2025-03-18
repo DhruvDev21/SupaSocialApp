@@ -4,6 +4,10 @@ import { hp, wp } from "@/src/helpers/Common";
 import { theme } from "@/src/constants/theme";
 import { useRouter } from "expo-router";
 import { item } from "../constants/type";
+import Icon from "@/assets/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { removeProduct, saveProduct } from "../redux/productSlice";
 
 const screenWidth = Dimensions.get("window").width;
 const padding = wp(4);
@@ -19,6 +23,19 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ item, cartItems, onAddToCart }) => {
   const navigation = useRouter();
   const isInCart = cartItems.some(cartItem => cartItem.id.toString() === item.id.toString());
+  const dispatch = useDispatch();
+  const savedProducts = useSelector((state: RootState) => state.product.savedProducts);
+
+  console.log('saved productas',savedProducts)
+  const isSaved = savedProducts.some((prod) => prod.id === item.id);
+
+  const handleSaveProduct = () => {
+    if (isSaved) {
+      dispatch(removeProduct(item.id));
+    } else {
+      dispatch(saveProduct(item));
+    }
+  };
 
   const handleCardPress = () => {
     navigation.push({ pathname: "/productDetails", params: { productId: item.id } });
@@ -26,6 +43,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, cartItems, onAddToCart 
 
   return (
     <Pressable style={[styles.card, { width: itemWidth }]} onPress={handleCardPress}>
+      <Pressable style={styles.savedContainer} onPress={handleSaveProduct}>
+        <Icon name={isSaved  ? 'saved':'unSaved'} size={18}/>
+      </Pressable>
       <Image source={{ uri: item.image_url }} style={styles.image} />
       <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
       <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
@@ -58,6 +78,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     marginVertical: wp(2),
+  },
+  savedContainer:{
+    position:'absolute',
+    zIndex:1,
+    backgroundColor:'white',
+    padding:wp(1.3),
+    borderRadius:20,
+    top:wp(3.5),
+    right:wp(3.5)
   },
   image: {
     width: "100%",

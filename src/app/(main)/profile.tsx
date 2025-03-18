@@ -90,11 +90,11 @@ const Profile: React.FC = () => {
     if (!userId || userId === user?.id) {
       setProfileUser({
         ...user,
-        name: user?.name ?? '',
-        phoneNumber: user?.phoneNumber ?? '',
-        image: user?.image ?? '',
-        bio: user?.bio ?? '',
-        address: user?.address ?? '',
+        name: user?.name ?? "",
+        phoneNumber: user?.phoneNumber ?? "",
+        image: user?.image ?? "",
+        bio: user?.bio ?? "",
+        address: user?.address ?? "",
       });
       setLoading(false);
     } else {
@@ -108,15 +108,15 @@ const Profile: React.FC = () => {
       setLoading(false);
     }
 
-    const counts = await getFollowCounts(userId ?? user?.id ?? '');
+    const counts = await getFollowCounts(userId ?? user?.id ?? "");
     setFollowersCount(counts.followers);
-    setFollowingCount(counts.following); 
+    setFollowingCount(counts.following);
   };
 
   useEffect(() => {
     const checkIfFollowingUser = async () => {
       if (user && userId) {
-        const isFollowingStatus = await isFollowing(user.id ?? '', userId);
+        const isFollowingStatus = await isFollowing(user.id ?? "", userId);
         setIsFollowingUser(isFollowingStatus);
       }
     };
@@ -128,7 +128,7 @@ const Profile: React.FC = () => {
     if (!user || !userId) return;
 
     if (isFollowingUser) {
-      const response = await unfollowUser(user.id ?? '', userId);
+      const response = await unfollowUser(user.id ?? "", userId);
       if (response.success) {
         setIsFollowingUser(false);
         setFollowersCount((prev) => Math.max(0, prev - 1));
@@ -136,14 +136,14 @@ const Profile: React.FC = () => {
         setFollowingCount((prev) => Math.max(0, prev - 1));
       }
     } else {
-      const checkIfFollowing = await isFollowing(user.id ?? '', userId);
+      const checkIfFollowing = await isFollowing(user.id ?? "", userId);
       if (checkIfFollowing) {
         console.log("You are already following this user");
         setIsFollowingUser(true);
         return;
       }
 
-      const response = await followUser(user.id ?? '', userId);
+      const response = await followUser(user.id ?? "", userId);
       if (response.success) {
         setIsFollowingUser(true);
         setFollowersCount((prev) => prev + 1);

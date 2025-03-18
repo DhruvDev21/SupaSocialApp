@@ -19,6 +19,10 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { createPostLike, removePostLike } from "../services/postService";
 import Loading from "./loading";
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { savePost, toggleLike, unsavePost } from "../redux/savedPostsSlice";
+import eventEmitter from "../utils/EventEmitter";
 
 const textStyle = {
   color: theme.colors.dark,
@@ -70,7 +74,6 @@ const PostCard = ({
   onEdit = () => {},
   profileClick = true,
 }: PostCardProps) => {
-  // console.log("the item data", item.comments);
   const shadowStyle = {
     shadowOffset: {
       width: 0,
@@ -83,6 +86,11 @@ const PostCard = ({
 
   const [likes, setLikes] = useState(item?.postLikes || []);
   const [shareLoading, setShareLoading] = useState<boolean>(false);
+  const dispatch = useDispatch();
+  const savedPosts = useSelector(
+    (state: RootState) => state.savedPosts.savedPosts
+  );
+  const isSaved = savedPosts.some((post) => post.id === item.id);
 
   useEffect(() => {
     setLikes(item?.postLikes || []);
@@ -105,30 +113,35 @@ const PostCard = ({
   });
 
   const onLike = async () => {
+    let updatedLikes;
+
     if (liked) {
-      const updatedLikes = likes?.filter(
-        (like: any) => like?.userId != currentUser?.id
-      );
+      updatedLikes = likes.filter((like: Like) => like.userId !== currentUser?.id);
       setLikes([...updatedLikes]);
       const res = await removePostLike(item?.id, currentUser?.id);
-      console.log("removed like response", res);
 
       if (!res.success) {
-        Alert.alert("post", "Can not like the post,somthing went wrong");
+        Alert.alert("Error", "Something went wrong while unliking the post.");
+        return;
       }
     } else {
-      const data = {
-        userId: currentUser?.id,
-        postId: item?.id,
-      };
-      setLikes([...likes, data]);
+      const data = { userId: currentUser?.id, postId: item?.id };
+      updatedLikes = [...likes, data];
+      setLikes(updatedLikes);
       const res = await createPostLike(data);
-      console.log("the post like response", res);
 
       if (!res.success) {
-        Alert.alert("post", "Can not like the post,somthing went wrong");
+        Alert.alert("Error", "Something went wrong while liking the post.");
+        return;
       }
     }
+
+    dispatch(toggleLike({ ...item, postLikes: updatedLikes }));
+
+    eventEmitter.emit("postLikeChanged", {
+      postId: item.id,
+      likes: updatedLikes,
+    });
   };
 
   const onShare = async () => {
@@ -196,6 +209,14 @@ const PostCard = ({
       pathname: "/(main)/profile",
       params: { userId: item?.user?.id },
     });
+  };
+
+  const handleSavePost = () => {
+    if (isSaved) {
+      dispatch(unsavePost(item.id));
+    } else {
+      dispatch(savePost(item));
+    }
   };
   return (
     <View style={[styles.container, hasShadow && shadowStyle]}>
@@ -274,30 +295,41 @@ const PostCard = ({
         )}
       </View>
       <View style={styles.footer}>
-        <View style={styles.footerButton}>
-          <TouchableOpacity onPress={onLike}>
+        <View style={styles.footer}>
+          <View style={styles.footerButton}>
+            <TouchableOpacity onPress={onLike}>
+              <Icon
+                name={"heart"}
+                fill={liked ? theme.colors.rose : "none"}
+                color={liked ? theme.colors.rose : theme.colors.textLight}
+                size={24}
+              />
+            </TouchableOpacity>
+            <Text style={styles.count}>{likes?.length || 0}</Text>
+          </View>
+          <View style={styles.footerButton}>
+            <TouchableOpacity onPress={openPostDetails}>
+              <Icon name={"comment"} color={theme.colors.textLight} size={24} />
+            </TouchableOpacity>
+            <Text style={styles.count}>{item?.comments[0].count}</Text>
+          </View>
+          <View style={styles.footerButton}>
+            <TouchableOpacity onPress={onShare}>
+              {shareLoading ? (
+                <Loading size={"small"} />
+              ) : (
+                <Icon name={"share"} color={theme.colors.textLight} size={24} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={[styles.footerButton, { marginRight: wp(2) }]}>
+          <TouchableOpacity onPress={handleSavePost}>
             <Icon
-              name={"heart"}
-              fill={liked ? theme.colors.rose : "none"}
-              color={liked ? theme.colors.rose : theme.colors.textLight}
-              size={24}
+              name={isSaved ? "saved" : "unSaved"}
+              color={theme.colors.textLight}
+              size={22}
             />
-          </TouchableOpacity>
-          <Text style={styles.count}>{likes?.length || 0}</Text>
-        </View>
-        <View style={styles.footerButton}>
-          <TouchableOpacity onPress={openPostDetails}>
-            <Icon name={"comment"} color={theme.colors.textLight} size={24} />
-          </TouchableOpacity>
-          <Text style={styles.count}>{item?.comments[0].count}</Text>
-        </View>
-        <View style={styles.footerButton}>
-          <TouchableOpacity onPress={onShare}>
-            {shareLoading ? (
-              <Loading size={"small"} />
-            ) : (
-              <Icon name={"share"} color={theme.colors.textLight} size={24} />
-            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -354,7 +386,8 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
+    justifyContent: "space-between",
+    gap: 10,
   },
   footerButton: {
     marginLeft: 5,
@@ -366,7 +399,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 18,
-    // backgroundColor:'red'
   },
   count: {
     color: theme.colors.text,

@@ -88,9 +88,16 @@ export interface Address {
   price: number;
   sizes?: string[];
   color?: string[];
+  created_at?: string;
+  description?: string;
+  gender?: string;
+  image_url?: string;
+  additional_images:string[];
 };
 
 export interface item {
+  selectedColor: any;
+  selectedSize: any;
   id:string;
   category:string;
   created_at:string;
@@ -121,4 +128,6 @@ export type order = {
   delivery_date:string;
   items:item[];
   status:string;
+  selectedSize:string;
+  selectedColor:string;
 }

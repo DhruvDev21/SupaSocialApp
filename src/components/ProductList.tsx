@@ -23,7 +23,7 @@ const gap = wp(2);
 const itemWidth = (screenWidth - 2 * padding - gap) / 2;
 
 interface ProductListProps {
-  data: item[];
+  data: Product[];
 }
 
 const ProductList: React.FC<ProductListProps> = ({ data }) => {
@@ -34,7 +34,7 @@ const ProductList: React.FC<ProductListProps> = ({ data }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<item | null>(null);
 
   const handleAddToCartPress = (item: item) => {
     if (item.sizes?.length || item.color?.length) {

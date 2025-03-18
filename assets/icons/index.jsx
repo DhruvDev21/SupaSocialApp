@@ -38,6 +38,8 @@ import processingIcon from "./processingIcon";
 import completedIcon from "./completedIcon";
 import upArrow from "./upArrow";
 import downArrow from "./downArrow";
+import saved from "./saved";
+import unSaved from "./unSaved";
 
 const icons = {
   home: Home,
@@ -77,6 +79,8 @@ const icons = {
   completedIcon: completedIcon,
   upArrow: upArrow,
   downArrow: downArrow,
+  saved: saved,
+  unSaved: unSaved,
 };
 
 const Icon = ({ name, ...props }) => {
