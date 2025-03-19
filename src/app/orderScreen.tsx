@@ -5,7 +5,6 @@ import {
   View,
   Image,
   Pressable,
-  ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "../components/ScreenWrapper";
@@ -18,21 +17,25 @@ import Icon from "@/assets/icons";
 import { theme } from "../constants/theme";
 import { useRouter } from "expo-router";
 import { statusStylesMock } from "../helpers/mockData";
+import { fetchReviews } from "../services/reviewService";
+import { supabase } from "@/lib/supabase";
 
 const orderScreen = () => {
   const { user } = useAuth();
   const navigation = useRouter();
   const [order, setOrder] = useState<order[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [reviews, setReviews] = useState<{ [key: string]: any }>({});
 
   useEffect(() => {
+    if (!user || !user.id) {
+      console.log("User is not logged in");
+      return;
+    }
+  
     const getUserData = async () => {
-      if (!user || !user.id) {
-        console.log("User is not logged in");
-        return;
-      }
       try {
-        const response = await getUserOrders(user.id);
+        const response = await getUserOrders(user.id as string);
         if (response) {
           setOrder(
             response.map((o) => ({
@@ -47,8 +50,47 @@ const orderScreen = () => {
         console.error("Cannot fetch the order data", e);
       }
     };
+  
+    const loadReviews = async () => {
+      if (!user) return;
+  
+      const reviewsData: { [key: string]: any } = {};
+      
+      await Promise.all(
+        order.flatMap((o) =>
+          o.items.map(async (product) => {
+            const review = await fetchReviews(product.id, user.id as string);
+            if (review) reviewsData[product.id] = review;
+          })
+        )
+      );
+  
+      setReviews(reviewsData);
+    };
+  
     getUserData();
-  }, []);
+    loadReviews();
+  
+    const subscription = supabase
+    .channel("reviews")
+    .on<{ product_id: string }>(
+      'postgres_changes',
+      { event: "*", schema: "public", table: "reviews" },
+      (payload) => {
+        console.log("Review updated:", payload);
+        setReviews((prev) => ({ 
+          ...prev,
+          [(payload.new as { product_id: string }).product_id]: payload.new,
+        }));
+      }
+    )
+    .subscribe();
+  
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [user, order]);
+  
 
   const filteredOrders = order.filter((o) =>
     selectedFilter === "all" ? true : o.status === selectedFilter
@@ -86,6 +128,59 @@ const orderScreen = () => {
     );
 
     const currentStatus = statusStyles[item.status] || statusStyles.pending;
+
+    const handleReview = async (
+      productId: string,
+      userId: string,
+      rating: number
+    ) => {
+      try {
+        const { data: existingReview, error: fetchError } = await supabase
+          .from("reviews")
+          .select("*")
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+          .single();
+
+        if (fetchError && fetchError.code !== "PGRST116") {
+          throw fetchError;
+        }
+
+        if (existingReview) {
+          const { error: updateError } = await supabase
+            .from("reviews")
+            .update({ rating })
+            .eq("product_id", productId)
+            .eq("user_id", userId);
+
+          if (updateError) throw updateError;
+        } else {
+          const { error: insertError } = await supabase
+            .from("reviews")
+            .insert([{ product_id: productId, user_id: userId, rating }]);
+
+          if (insertError) throw insertError;
+        }
+
+        const { data: updatedReview, error: refreshError } = await supabase
+          .from("reviews")
+          .select("*")
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+          .single();
+
+        if (refreshError) throw refreshError;
+
+        setReviews((prev) => ({
+          ...prev,
+          [productId]: { ...existingReview, rating },
+        }));
+
+        console.log("Updated reviews state:", reviews);
+      } catch (e) {
+        console.error("Error submitting review:", e);
+      }
+    };
 
     return (
       <Pressable
@@ -146,6 +241,28 @@ const orderScreen = () => {
                     </>
                   )}
                 </View>
+                {item?.status == "delivered" && (
+                    <View style={styles.starContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Pressable
+                          key={star}
+                          onPress={() =>
+                            user?.id && handleReview(productArray.id, user.id, star)
+                          }
+                        >
+                          <Icon
+                            name={
+                              reviews[productArray.id]?.rating >= star
+                                ? "filledStar"
+                                : "emptyStar"
+                            }
+                            size={15}
+                            color={reviews[productArray.id]?.rating >= star ? '#ffc107' : theme.colors.textDark}
+                          />
+                        </Pressable>
+                      ))}
+                    </View>
+                )}
               </View>
             </View>
           ))}
@@ -175,7 +292,6 @@ const orderScreen = () => {
       <View style={styles.headerContainer}>
         <Header title="Order" onPress={() => navigation.push("/shopping")} />
       </View>
-      {/* <View> */}
       <View style={styles.filterContainer}>
         {["all", "pending", "delivered", "cancelled"].map((filter) => (
           <Pressable
@@ -197,8 +313,6 @@ const orderScreen = () => {
           </Pressable>
         ))}
       </View>
-
-      {/* </View> */}
       <FlatList
         data={filteredOrders}
         keyExtractor={(item) => item.id.toString()}
@@ -325,6 +439,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "400",
     color: theme.colors.textDark,
+  },
+  starContainer: {
+    flexDirection: "row",
+    gap: 5,
+    marginVertical:wp(1)
   },
   emptyContainer: {
     flex: 1,

@@ -3,7 +3,7 @@ import { View, Text, Image, Pressable, StyleSheet, Dimensions } from "react-nati
 import { hp, wp } from "@/src/helpers/Common";
 import { theme } from "@/src/constants/theme";
 import { useRouter } from "expo-router";
-import { item } from "../constants/type";
+import { CartItem, item } from "../constants/type";
 import Icon from "@/assets/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
@@ -16,7 +16,7 @@ const itemWidth = (screenWidth - 2 * padding - gap) / 2;
 
 interface ProductCardProps {
   item: item;
-  cartItems: item[];
+  cartItems: (item | CartItem)[];
   onAddToCart: (item: item) => void;
 }
 
@@ -26,7 +26,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, cartItems, onAddToCart 
   const dispatch = useDispatch();
   const savedProducts = useSelector((state: RootState) => state.product.savedProducts);
 
-  console.log('saved productas',savedProducts)
+  // console.log('saved productas',savedProducts)
   const isSaved = savedProducts.some((prod) => prod.id === item.id);
 
   const handleSaveProduct = () => {

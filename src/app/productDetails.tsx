@@ -6,8 +6,6 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
-  Modal,
-  Pressable,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { screenWidth, wp } from "../helpers/Common";
@@ -17,7 +15,7 @@ import {
   fetchProductById,
   fetchSimilarProducts,
 } from "../services/productServices";
-import { item, Product } from "../constants/type";
+import { CartItem, item, Product, Review } from "../constants/type";
 import { theme } from "../constants/theme";
 import { Image } from "expo-image";
 import ImageModal from "../components/ImageModal";
@@ -27,12 +25,18 @@ import { addToCart } from "../redux/cartSlice";
 import Button from "../components/Button";
 import ProductCard from "../components/ProductCard";
 import ProductOptionsModal from "../components/ProductOptionsModal";
+import {
+  fetchProdectAllReviews,
+  fetchProdectReviews,
+} from "../services/reviewService";
+import ReviewSummary from "../components/ReviewSummary";
+import ReviewContent from "../components/ReviewContent";
 
 const ProductDetails = () => {
   const navigation = useRouter();
   const dispatch = useDispatch();
   const { productId } = useLocalSearchParams();
-  const [product, setProduct] = useState<item | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -44,9 +48,11 @@ const ProductDetails = () => {
   const [sizeError, setSizeError] = useState<boolean>(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [colorError, setColorError] = useState<boolean>(false);
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<item[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [allReviews, setAllReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     const getProduct = async () => {
@@ -60,7 +66,30 @@ const ProductDetails = () => {
       }
     };
 
+    const getAverageRating = async () => {
+      if (productId) {
+        const { data, error } = await fetchProdectReviews(productId);
+        if (!error && data.length > 0) {
+          setReviews(data);
+        } else {
+          setReviews([]);
+        }
+      }
+    };
+    const getAllReviewData = async () => {
+      if (productId) {
+        const { data, error } = await fetchProdectAllReviews(productId);
+        if (!error && data.length > 0) {
+          setAllReviews(data);
+        } else {
+          setAllReviews([]);
+        }
+      }
+    };
+
     getProduct();
+    getAverageRating();
+    getAllReviewData();
   }, [productId]);
 
   useEffect(() => {
@@ -78,11 +107,11 @@ const ProductDetails = () => {
   }, [product]);
 
   const onScroll = (event: any) => {
-    if (!event) return; // Prevents null event errors
+    if (!event) return; 
 
-    event.persist(); // Ensures the event is not nullified
+    event.persist(); 
 
-    if (!event.nativeEvent?.contentOffset) return; // Prevents errors if contentOffset is null
+    if (!event.nativeEvent?.contentOffset) return;
 
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
@@ -97,7 +126,7 @@ const ProductDetails = () => {
         lastIndexRef.current = slideIndex;
         setActiveIndex(slideIndex);
       }
-    }, 100); // Debounce for smooth scrolling
+    }, 100); 
   };
 
   const handleImagePress = (index: number) => {
@@ -106,7 +135,7 @@ const ProductDetails = () => {
   };
   const handleAddToCart = (item: Product) => {
     if (product && product.sizes && product.sizes.length > 0 && !selectedSize) {
-      setSizeError(true); // Show error message if size is required but not selected
+      setSizeError(true);
       return;
     }
     if (
@@ -115,12 +144,16 @@ const ProductDetails = () => {
       product.color.length > 0 &&
       !selectedColor
     ) {
-      // Fix: Check selectedColor, not colorError
-      setColorError(true); // Show error message if color is required but not selected
+      setColorError(true);
       return;
     }
 
-    const itemToAdd = { ...item, selectedSize, selectedColor }; // Include selected color in the cart item
+    const itemToAdd: CartItem = {
+      ...item,
+      selectedSize,
+      selectedColor,
+      quantity: 1,
+    };
     dispatch(addToCart(itemToAdd));
   };
   const handleGoToBag = () => {
@@ -129,16 +162,16 @@ const ProductDetails = () => {
 
   const handleSizeSelect = (size: string) => {
     setSelectedSize(size);
-    setSizeError(false); // Hide error once a size is selected
+    setSizeError(false);
   };
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
-    setColorError(false); // Hide error once a size is selected
+    setColorError(false);
   };
 
   const handleSuggestionAddToCartPress = (item: item) => {
     if (item.sizes?.length || item.color?.length) {
-      setSelectedProduct(item);
+      setSelectedProduct(item as unknown as Product);
       setModalVisible(true);
     } else {
       dispatch(addToCart(item));
@@ -151,6 +184,8 @@ const ProductDetails = () => {
           ...selectedProduct,
           selectedSize: size,
           selectedColor: color,
+          quantity: 1,
+          image_url: selectedProduct?.image_url || "",
         })
       );
     }
@@ -314,7 +349,10 @@ const ProductDetails = () => {
             textStyle={{ color: theme.colors.primary }}
           />
         ) : (
-          <Button title="Add to Bag" onPress={() => handleAddToCart(product)} />
+          <Button
+            title="Add to Bag"
+            onPress={() => handleAddToCart(product as Product)}
+          />
         )}
 
         {similarProducts.length > 0 && (
@@ -345,6 +383,19 @@ const ProductDetails = () => {
             />
           </>
         )}
+
+        <View style={styles.suggestionContainer}>
+          <Text style={styles.suggestionText}>Reviews</Text>
+
+          <ReviewSummary reviews={reviews} />
+
+          {allReviews.map((review: Review) => (
+            <ReviewContent
+              key={review.id}
+              review={{ ...review, user_id: review.user_id || "" }}
+            />
+          ))}
+        </View>
       </ScrollView>
 
       <ImageModal
@@ -371,10 +422,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  productImage: {
-    height: "100%",
-    width: "100%",
   },
   errorContainer: {
     flex: 1,
@@ -465,22 +512,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  fullscreenTouchable: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullscreenImage: {
-    width: "90%",
-    height: "80%",
-    resizeMode: "contain",
-  },
   suggestionContainer: {
     marginTop: wp(4),
   },
   suggestionText: {
     fontSize: 18,
     fontWeight: "500",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  ratingText: {
+    fontSize: 16,
+  },
+  starContainer: {
+    flexDirection: "row",
+    marginLeft: 5,
   },
 });

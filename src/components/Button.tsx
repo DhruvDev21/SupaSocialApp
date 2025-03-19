@@ -55,13 +55,13 @@ export default Button;
 const styles = StyleSheet.create({
   button: {
     backgroundColor: theme.colors.primary,
-    height: hp(6.6),
+    height: hp(5),
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.lg,
   },
   text: {
-    fontSize: hp(2.5),
+    fontSize: hp(2),
     color: "white",
     fontWeight: theme.fonts.bold,
   },

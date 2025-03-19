@@ -8,9 +8,9 @@ export const getUserImageSrc = (imagePath: string) => {
   if (imagePath) {
     return { uri: imagePath };
   } 
-  // else {
-  //   return require("../../assets/images/defaultuser.png");
-  // }
+  else {
+    return require("../../assets/images/defaultUserIcon.jpg");
+  }
 };
 
 export const getSupabaseFileUrl = (filePath: string) => {

@@ -351,6 +351,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: theme.colors.gray,
     shadowColor: "#000",
+    flex:1
   },
   header: {
     flexDirection: "row",

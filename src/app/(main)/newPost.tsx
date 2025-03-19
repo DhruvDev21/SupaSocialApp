@@ -113,36 +113,84 @@ const NewPost = () => {
     player.play();
   });
 
+  // const onSubmit = async () => {
+  //   if (!bodyRef.current && !file) {
+  //     Alert.alert("Post", "please chose an image or enter text to post");
+  //     return;
+  //   }
+
+  //   let data: {
+  //     file: any;
+  //     body: string;
+  //     userid: string | undefined;
+  //     id?: string;
+  //   } = {
+  //     file,
+  //     body: bodyRef.current,
+  //     userid: user?.id,
+  //   };
+
+  //   if (post && post.id)
+  //     data.id = Array.isArray(post.id) ? post.id[0] : post.id;
+
+  //   setLoading(true);
+  //   let res = await createOrUpdatePost(data);
+  //   setLoading(false);
+  //   if (res?.success) {
+  //     setFile(null);
+  //     bodyRef.current = "";
+  //     editorRef?.current?.setContentHTML("");
+  //     navigation.back();
+  //   }
+  // };
+
   const onSubmit = async () => {
     if (!bodyRef.current && !file) {
-      Alert.alert("Post", "please chose an image or enter text to post");
+      Alert.alert("Post", "Please choose an image or enter text to post");
       return;
     }
-
-    let data: {
-      file: any;
-      body: string;
-      userid: string | undefined;
-      id?: string;
-    } = {
-      file,
-      body: bodyRef.current,
-      userid: user?.id,
-    };
-
-    if (post && post.id)
-      data.id = Array.isArray(post.id) ? post.id[0] : post.id;
-
-    setLoading(true);
-    let res = await createOrUpdatePost(data);
-    setLoading(false);
-    if (res?.success) {
-      setFile(null);
-      bodyRef.current = "";
-      editorRef?.current?.setContentHTML("");
-      navigation.back();
+  
+    try {
+      let data: {
+        file: any;
+        body: string;
+        userid: string | undefined;
+        id?: string;
+      } = {
+        file,
+        body: bodyRef.current,
+        userid: user?.id,
+      };
+  
+      if (post && post.id)
+        data.id = Array.isArray(post.id) ? post.id[0] : post.id;
+  
+      setLoading(true);
+      let res = await createOrUpdatePost(data);
+      setLoading(false);
+  
+      if (res?.success) {
+        setFile(null);
+        bodyRef.current = "";
+        editorRef?.current?.setContentHTML("");
+        navigation.back();
+      }
+    } catch (error: any) {
+      setLoading(false);
+      console.log("Upload error:", error); // Log error for debugging
+  
+      // Check if it's an Out of Memory Error
+      if (
+        error?.message?.includes("ExponentFileSystem.readAsStringAsync") &&
+        error?.message?.includes("OutOfMemoryError")
+      ) {
+        Alert.alert("Error", "File too large, failed to upload");
+      } else {
+        Alert.alert("Error", "Something went wrong, please try again.");
+      }
     }
-  };
+  };  
+  
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>

@@ -274,6 +274,7 @@ const styles = StyleSheet.create({
     marginLeft: wp(2),
     fontSize: hp(1.8),
     color: theme.colors.text,
+    padding:wp(2.5)
   },
   categoryContainer: {
     // borderBottomWidth: 1,

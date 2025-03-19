@@ -5,56 +5,137 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
-  Dimensions,
   TouchableOpacity,
   ScrollView,
-  Pressable,
+  TextInput,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { cancelOrder, fetchOrderDetails } from "../services/orderServices";
 import { theme } from "../constants/theme";
 import Header from "../components/Header";
-import { order } from "../constants/type";
-import { wp } from "../helpers/Common";
+import type { order } from "../constants/type";
+import { screenWidth, wp } from "../helpers/Common";
 import ProgressBarOforder from "../components/ProgressBarOforder";
 import Icon from "@/assets/icons";
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
-
-const deliveryStatuses = [
-  "pending",
-  "confirmed",
-  "packed",
-  "being shipped",
-  "shipped",
-  "out for delivery",
-  "delivered",
-];
+import {
+  fetchReviews,
+  updateRating,
+  submitFullReview,
+} from "../services/reviewService";
+import { useAuth } from "../contexts/AuthContext";
+import { deliveryStatuses } from "../helpers/mockData";
 
 const orderDetails = () => {
-  const { orderId } = useLocalSearchParams(); // Get the order ID
-  const [order, setOrder] = useState<order | null>(null);
+  const { orderId } = useLocalSearchParams();
+  const [order, setOrder] = useState<(order & { items: { id: number }[] }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSummaryVisible, setIsSummaryVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [reviews, setReviews] = useState<{ [key: number]: string }>({});
+  const [ratings, setRatings] = useState<{ [key: number]: number }>({});
+  const [reviewLoading, setReviewLoading] = useState<{
+    [key: number]: boolean;
+  }>({});
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [tempReview, setTempReview] = useState<{ [key: number]: string }>({});
+  const { user } = useAuth();
+
+  const handleStarPress = async (productId: number, rating: number) => {
+    setRatings((prevRatings) => ({ ...prevRatings, [productId]: rating }));
+    if (user) {
+      await updateRating(productId, user.id, rating);
+    } else {
+      console.error("User is not authenticated.");
+    }
+  };
+
+  const handleEditReview = (index: number) => {
+    setEditingIndex(index);
+    setTempReview((prev) => ({
+      ...prev,
+      [index]: reviews[order?.items?.[index]?.id || 0] || "",
+    }));
+  };
+  const handleSaveReview = async (index: number) => {
+    const productId = order?.items?.[index]?.id;
+    if (!productId) {
+      console.error("Invalid product ID or order is null.");
+      return;
+    }
+    const reviewText = tempReview[index] || "";
+    const rating = ratings[productId] || 0;
+
+    if (!reviewText && rating === 0) {
+      console.log("Review or rating is required.");
+      return;
+    }
+
+    setReviewLoading((prev) => ({ ...prev, [index]: true }));
+
+    try {
+      const result = await submitFullReview(
+        productId,
+        user?.id || "",
+        reviewText,
+        rating
+      );
+
+        setReviews((prevReviews) => ({
+          ...prevReviews,
+          [productId]: reviewText,
+        }));
+
+        setTempReview((prev) => ({
+          ...prev,
+          [index]: "",
+        }));
+
+        setEditingIndex(null);
+        console.log("Review submitted successfully:", result);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+    }
+
+    setReviewLoading((prev) => ({ ...prev, [index]: false }));
+  };
 
   useEffect(() => {
     const getOrderDetails = async () => {
       if (orderId) {
+        setLoading(true);
         const data = await fetchOrderDetails(orderId as string);
-        console.log("the order data", data);
-        if (data) setOrder(data);
+        if (data) {
+          setOrder(data);
+          await loadReviews(data);
+        }
         setLoading(false);
       }
     };
+
+    const loadReviews = async (orderData: order) => {
+      if (!orderData?.items) return;
+      const fetchedRatings: { [key: number]: number } = {};
+      const fetchedReviews: { [key: number]: string } = {};
+
+      for (const item of orderData.items) {
+        const reviewData = user ? await fetchReviews(item.id, user.id) : null;
+        if (reviewData) {
+          fetchedRatings[item.id as any] = reviewData.rating || 0;
+          fetchedReviews[item.id as any] = reviewData.comment || "";
+        }
+      }
+      setRatings(fetchedRatings);
+      setReviews(fetchedReviews);
+    };
+
     getOrderDetails();
   }, [orderId]);
+
   const handleCancelPress = async () => {
     if (order && order.id) {
       const response = await cancelOrder(order.id);
       if (response.success) {
-        // Directly update the order status to 'cancelled'
         setOrder((prevOrder) =>
           prevOrder ? { ...prevOrder, status: "cancelled" } : null
         );
@@ -64,11 +145,10 @@ const orderDetails = () => {
     }
   };
 
-  const currentStatus = order?.delivery_status?.toLowerCase() || "pending"; // Ensure lowercase
+  const currentStatus = order?.delivery_status?.toLowerCase() || "pending";
   const currentStepIndex = deliveryStatuses.indexOf(currentStatus);
   const isCanceled = order?.status === "cancelled";
 
-  // If status is invalid, default to "pending"
   const validStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   const steps = deliveryStatuses.map((status, index) => ({
@@ -76,18 +156,15 @@ const orderDetails = () => {
     completed: index <= validStepIndex,
   }));
 
-  console.log("Current Status:", currentStatus);
-  console.log("Current Step Index:", validStepIndex);
-
   const itemSubtotal =
     order?.items?.reduce((acc, item) => acc + item.price * item.quantity, 0) ||
     0;
-  const taxAmount = itemSubtotal * 0.05; // 5% tax
+  const taxAmount = itemSubtotal * 0.05;
   const shippingCharges = 15;
   const totalPrice = itemSubtotal + taxAmount + shippingCharges;
 
   const handleScroll = (event: any) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
     setActiveIndex(index);
   };
 
@@ -114,7 +191,10 @@ const orderDetails = () => {
       <View style={styles.headerContainer}>
         <Header title="Order Details" />
         {order?.status !== "cancelled" && (
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleCancelPress}>
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleCancelPress}
+          >
             <Icon name="delete" color={theme.colors.rose} />
           </TouchableOpacity>
         )}
@@ -122,12 +202,12 @@ const orderDetails = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <FlatList
           data={order.items}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal // Enable horizontal scrolling
-          pagingEnabled // Snap to each item like a carousel
+          keyExtractor={(item) => item.id}
+          horizontal 
+          pagingEnabled 
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={[styles.itemContainer, { width: SCREEN_WIDTH }]}>
+            <View style={[styles.itemContainer, { width: screenWidth }]}>
               <View style={styles.imageContainer}>
                 <Image
                   source={{ uri: item.image_url }}
@@ -159,9 +239,6 @@ const orderDetails = () => {
         <View style={styles.addressContainer}>
           <View style={styles.addressTitleContainer}>
             <Text style={styles.addressTitle}>Delivary Address</Text>
-            {/* <TouchableOpacity onPress={handleAddAddress}> */}
-            {/* <Icon name={"edit"} size={20} /> */}
-            {/* </TouchableOpacity> */}
           </View>
           <Text
             style={[
@@ -213,12 +290,6 @@ const orderDetails = () => {
                   ${shippingCharges.toFixed(2)}
                 </Text>
               </View>
-              {/* <View style={styles.itemSummaryContainer}>
-                <Text style={[styles.summaryText, { fontWeight: "bold" }]}>
-                  Total:
-                </Text>
-                <Text style={styles.summaryText}>${totalPrice.toFixed(2)}</Text>
-              </View> */}
             </View>
           )}
         </View>
@@ -226,6 +297,88 @@ const orderDetails = () => {
           <Text style={styles.statusTitle}>Order Status</Text>
           <ProgressBarOforder steps={steps} isCanceled={isCanceled} />
         </View>
+        {order?.status === "completed" && (
+          <View style={styles.reviewContainer}>
+            <Text style={styles.reviewTitle}>Review</Text>
+
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() =>
+                    handleStarPress(order.items[activeIndex].id, star)
+                  }
+                >
+                  <Icon
+                    name={
+                      ratings[order.items[activeIndex]?.id ?? 0] >= star
+                        ? "filledStar"
+                        : "emptyStar"
+                    }
+                    size={24}
+                    color={
+                      ratings[order.items[activeIndex].id] >= star
+                        ? "#ffc107"
+                        : theme.colors.textDark
+                    }
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {editingIndex === activeIndex ? (
+              <>
+                <TextInput
+                  style={styles.reviewInput}
+                  value={tempReview[activeIndex] || ""}
+                  onChangeText={(text) =>
+                    setTempReview((prev) => ({ ...prev, [activeIndex]: text }))
+                  }
+                />
+                <TouchableOpacity
+                  style={styles.reviewButton}
+                  onPress={() => handleSaveReview(activeIndex)}
+                >
+                  {reviewLoading[activeIndex] ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.reviewButtonText}>Submit Review</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : reviews[order.items[activeIndex]?.id] ? (
+              <View style={styles.reviewTextContainer}>
+                <Text style={styles.reviewText}>
+                  {reviews[order.items[activeIndex]?.id]}
+                </Text>
+                <TouchableOpacity onPress={() => handleEditReview(activeIndex)}>
+                  <Icon name="edit" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.reviewInput}
+                  placeholder="Write your review..."
+                  value={tempReview[activeIndex] || ""}
+                  onChangeText={(text) =>
+                    setTempReview((prev) => ({ ...prev, [activeIndex]: text }))
+                  }
+                />
+                <TouchableOpacity
+                  style={styles.reviewButton}
+                  onPress={() => handleSaveReview(activeIndex)}
+                >
+                  {reviewLoading[activeIndex] ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.reviewButtonText}>Submit Review</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -242,27 +395,14 @@ const styles = StyleSheet.create({
   },
   logoutBtn: {
     position: "absolute",
-    top:wp(2),
+    top: wp(2),
     right: wp(5),
     padding: 5,
     borderRadius: theme.radius.sm,
     backgroundColor: "#fee2e2",
   },
   scrollViewContainer: {
-    paddingBottom: wp(10),
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  status: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  date: {
-    fontSize: 16,
-    marginBottom: 10,
+    paddingBottom: wp(15),
   },
   itemContainer: {
     alignItems: "center",
@@ -375,33 +515,11 @@ const styles = StyleSheet.create({
   itemSummaryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    // marginBottom: wp(1),
   },
   summaryText: {
     fontSize: 14,
     color: theme.colors.text,
     marginBottom: wp(1),
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: wp(3),
-    marginTop: wp(3),
-    paddingHorizontal: wp(4),
-  },
-  button: {
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: wp(1),
-    borderColor: theme.colors.textLight,
-    borderRadius: theme.radius.xs,
-  },
-  buttonText: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: theme.colors.textDark,
   },
   orderStatusContainer: {
     paddingHorizontal: wp(4),
@@ -411,5 +529,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: wp(4),
+  },
+  starsContainer: {
+    flexDirection: "row",
+    marginBottom: wp(2),
+    gap: wp(4),
+  },
+  reviewContainer: {
+    padding: wp(4),
+    backgroundColor: "white",
+    borderRadius: 8,
+    elevation: 2,
+    marginHorizontal: wp(4),
+  },
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: wp(2),
+  },
+  reviewInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.textLight,
+    borderRadius: 8,
+    padding: wp(2),
+    fontSize: 14,
+    marginBottom: wp(2),
+  },
+  reviewButton: {
+    backgroundColor: theme.colors.primary,
+    padding: wp(2),
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  reviewButtonText: {
+    color: "white",
+    fontWeight: "600",
+  },
+  reviewTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: wp(2),
+  },
+  reviewText: {
+    marginTop: wp(2),
+    fontSize: 14,
+    color: theme.colors.textDark,
   },
 });

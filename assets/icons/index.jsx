@@ -40,6 +40,8 @@ import upArrow from "./upArrow";
 import downArrow from "./downArrow";
 import saved from "./saved";
 import unSaved from "./unSaved";
+import emptyStar from "./emptyStar";
+import filledStar from "./filledStar";
 
 const icons = {
   home: Home,
@@ -81,6 +83,8 @@ const icons = {
   downArrow: downArrow,
   saved: saved,
   unSaved: unSaved,
+  emptyStar: emptyStar,
+  filledStar: filledStar,
 };
 
 const Icon = ({ name, ...props }) => {

@@ -80,7 +80,7 @@ export interface Address {
   created_at: string;
 }
 
- export type Product = {
+export type Product = {
   id: string;
   name: string;
   category: string;
@@ -92,42 +92,68 @@ export interface Address {
   description?: string;
   gender?: string;
   image_url?: string;
-  additional_images:string[];
+  additional_images: string[];
 };
 
 export interface item {
   selectedColor: any;
   selectedSize: any;
-  id:string;
-  category:string;
-  created_at:string;
-  description:string;
-  gender:string;
-  image_url:string;
-  name:string;
-  price:number;
-  quantity:number;
-  additional_images:string[];
+  id: string;
+  category: string;
+  created_at: string;
+  description: string;
+  gender: string;
+  image_url: string;
+  name: string;
+  price: number;
+  quantity: number;
+  additional_images: string[];
   sizes?: string[];
-  color?:string[];
+  color?: string[];
 }
 
 export interface address {
-  addressName:string;
-  address:string;
-  city:string;
-  country:string;
-  state:string;
-  zip:number;
+  addressName: string;
+  address: string;
+  city: string;
+  country: string;
+  state: string;
+  zip: number;
 }
 
 export type order = {
   id: any;
-  address:address;
-  delivery_status:string;
-  delivery_date:string;
-  items:item[];
-  status:string;
-  selectedSize:string;
-  selectedColor:string;
+  address: address;
+  delivery_status: string;
+  delivery_date: string;
+  items: item[];
+  status: string;
+  selectedSize: string;
+  selectedColor: string;
+};
+
+export interface CartItem {
+  id: number | string;
+  name: string;
+  price: number;
+  image_url?: string;
+  quantity: number;
+  size?: string;
+  selectedSize?: string | null;
+  selectedColor?: string | null;
+  category?: string;
+  subCategory?: string;
+  sizes?: string[];
+  color?: string[];
+  created_at?: string;
+  description?: string;
+  gender?: string;
+  additional_images?: string[];
 }
+export type Review = {
+  id?: string;
+  rating: number;
+  created_at?: string;
+  comment?: string;
+  user_id?: string;
+};

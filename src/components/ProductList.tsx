@@ -23,7 +23,7 @@ const gap = wp(2);
 const itemWidth = (screenWidth - 2 * padding - gap) / 2;
 
 interface ProductListProps {
-  data: Product[];
+  data: Product[] | any;
 }
 
 const ProductList: React.FC<ProductListProps> = ({ data }) => {

@@ -81,7 +81,7 @@ const Saved = () => {
         <FlatList
           key={"post"}
           data={Array.isArray(savedPosts) ? savedPosts : []}
-          contentContainerStyle={{ padding: wp(4) }}
+          contentContainerStyle={{ padding: wp(4), flexGrow: 1 }}
           keyExtractor={(item) =>
             item?.id ? String(item.id) : Math.random().toString()
           }
@@ -104,7 +104,7 @@ const Saved = () => {
         <FlatList
           key={"product"}
           data={savedProducts}
-          contentContainerStyle={{ padding: wp(4) }}
+          contentContainerStyle={{ padding: wp(4), flexGrow: 1 }}
           numColumns={2}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   noProductContainer: {
     justifyContent: "center",
     alignItems: "center",
-    flex: 1,
+    flexGrow: 1,
   },
   noSavedText: {
     textAlign: "center",

@@ -59,3 +59,13 @@ export const offers = [
     image:require('@/assets/images/offerImage.png')
   },
 ];
+
+export const deliveryStatuses = [
+  "pending",
+  "confirmed",
+  "packed",
+  "being shipped",
+  "shipped",
+  "out for delivery",
+  "delivered",
+];
