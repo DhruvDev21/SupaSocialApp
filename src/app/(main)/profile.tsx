@@ -62,6 +62,8 @@ const Profile: React.FC = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "follows" },
         (payload) => {
+          console.log("Real-time update:", payload); // Debugging
+
           if (payload.eventType === "INSERT") {
             if (payload.new.follower_id === user?.id) {
               setFollowingCount((prev) => prev + 1);
@@ -131,24 +133,17 @@ const Profile: React.FC = () => {
       const response = await unfollowUser(user.id ?? "", userId);
       if (response.success) {
         setIsFollowingUser(false);
-        setFollowersCount((prev) => Math.max(0, prev - 1));
-
-        setFollowingCount((prev) => Math.max(0, prev - 1));
+        const counts = await getFollowCounts(userId); // <-- Fetch fresh counts
+        setFollowersCount(counts.followers);
+        setFollowingCount(counts.following);
       }
     } else {
-      const checkIfFollowing = await isFollowing(user.id ?? "", userId);
-      if (checkIfFollowing) {
-        console.log("You are already following this user");
-        setIsFollowingUser(true);
-        return;
-      }
-
       const response = await followUser(user.id ?? "", userId);
       if (response.success) {
         setIsFollowingUser(true);
-        setFollowersCount((prev) => prev + 1);
-      } else {
-        console.error("Error following user:", response);
+        const counts = await getFollowCounts(userId); // <-- Fetch fresh counts
+        setFollowersCount(counts.followers);
+        setFollowingCount(counts.following);
       }
     }
   };

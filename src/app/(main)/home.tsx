@@ -22,6 +22,7 @@ import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import React from "react";
 import eventEmitter from "@/src/utils/EventEmitter";
+import StoriesList from "@/src/components/story/StoriesList";
 
 var limit = 0;
 
@@ -244,65 +245,81 @@ const Home = () => {
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>SupaSocial</Text>
-          <View style={styles.icons}>
-            <Pressable
-              onPress={() => {
-                setNotificationCount(0);
-                navigation.push("/(main)/notification");
-              }}
-            >
-              <Icon
-                name={"heart"}
-                size={hp(3.2)}
-                strokeWidth={2}
-                color={theme.colors.text}
-              />
-              {notificationCount > 0 && (
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>{notificationCount}</Text>
-                </View>
-              )}
-            </Pressable>
-            <Pressable onPress={() => navigation.push("/(main)/newPost")}>
-              <Icon
-                name={"plus"}
-                size={hp(3.2)}
-                strokeWidth={2}
-                color={theme.colors.text}
-              />
-            </Pressable>
-            <Pressable onPress={() => navigation.push("/(main)/profile")}>
-              <Avatar
-                uri={user?.image}
-                size={hp(4.3)}
-                rounded={theme.radius.sm}
-                style={{ borderWidth: 2 }}
-              />
-            </Pressable>
+        <View>
+          <View style={styles.header}>
+            <Text style={styles.title}>SupaSocial</Text>
+            <View style={styles.icons}>
+              <Pressable
+                onPress={() => {
+                  setNotificationCount(0);
+                  navigation.push("/(main)/notification");
+                }}
+              >
+                <Icon
+                  name={"heart"}
+                  size={hp(3.2)}
+                  strokeWidth={2}
+                  color={theme.colors.text}
+                />
+                {notificationCount > 0 && (
+                  <View style={styles.pill}>
+                    <Text style={styles.pillText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </Pressable>
+              <Pressable onPress={() => navigation.push("/(main)/newPost")}>
+                <Icon
+                  name={"plus"}
+                  size={hp(3.2)}
+                  strokeWidth={2}
+                  color={theme.colors.text}
+                />
+              </Pressable>
+              <Pressable onPress={() => navigation.push("/(main)/profile")}>
+                <Avatar
+                  uri={user?.image}
+                  size={hp(4.3)}
+                  rounded={theme.radius.sm}
+                  style={{ borderWidth: 2 }}
+                />
+              </Pressable>
+            </View>
+          </View>
+          <View style={styles.storyContainer}>
+            <StoriesList />
           </View>
         </View>
-        <FlatList
-          data={posts}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listsStyle}
-          renderItem={({ item }) => (
-            <PostCard item={item} currentUser={user} navigation={navigation} />
-          )}
-          onEndReached={getPosts}
-          ListFooterComponent={
-            hasMore ? (
-              <View style={{ marginVertical: posts.length == 0 ? 300 : 15 }}>
-                <Loading />
-              </View>
-            ) : (
-              <View style={{ marginTop: 10, marginBottom: 20 }}>
-                <Text style={styles.noPosts}>No more posts</Text>
-              </View>
-            )
-          }
-        />
+        <View>
+          <FlatList
+            data={posts}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listsStyle}
+            renderItem={({ item }) => (
+              <PostCard
+                item={item}
+                currentUser={user}
+                navigation={navigation}
+              />
+            )}
+            onEndReached={getPosts}
+            ListFooterComponent={
+              hasMore ? (
+                <View
+                  style={{
+                    marginVertical: posts.length == 0 ? 300 : 15,
+                    marginBottom: posts.length == 0 ? 300 : wp(37),
+                  }}
+                >
+                  <Loading />
+                </View>
+              ) : (
+                <View style={{ marginTop: 10, marginBottom: wp(37) }}>
+                  <Text style={styles.noPosts}>No more posts</Text>
+                </View>
+              )
+            }
+          />
+        </View>
       </View>
     </ScreenWrapper>
   );
@@ -318,10 +335,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderColor: theme.colors.gray,
     paddingHorizontal: wp(4),
-    paddingBottom: wp(2),
+    paddingBottom: wp(1),
   },
   title: {
     color: theme.colors.text,
@@ -333,6 +348,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 18,
+  },
+  storyContainer: {
+    paddingHorizontal: wp(4),
+    borderBottomWidth: 1,
+    borderColor: theme.colors.gray,
   },
   listsStyle: {
     paddingTop: wp(4),

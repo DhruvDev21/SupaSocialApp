@@ -3,9 +3,7 @@ import { User } from "../constants/type";
 
 export const getAllUserData = async () => {
   try {
-    const { data, error } = await supabase
-      .from("users")
-      .select()
+    const { data, error } = await supabase.from("users").select();
 
     if (error) {
       return { success: false, msg: error.message };
@@ -81,30 +79,23 @@ export const unfollowUser = async (followerId: string, followingId: string) => {
   }
 };
 
-// Function to check if the user is followed
 export const isFollowing = async (followerId: string, followingId: string) => {
-  const { data, error, status } = await supabase
-    .from("follows")
-    .select("*")
-    .eq("follower_id", followerId)
-    .eq("following_id", followingId)
-    .single(); // This fetches a single row or null if no match is found
+  try {
+    const { data, error } = await supabase
+      .from("follows")
+      .select("*")
+      .eq("follower_id", followerId)
+      .eq("following_id", followingId)
+      .maybeSingle(); // <-- Use maybeSingle() instead of single()
 
-  if (error) {
+    if (error) throw error;
+    return !!data; // Returns true if following, false otherwise
+  } catch (error) {
     console.error("Error checking follow status:", error);
-    return false; // Return false on error
-  }
-
-  // If no rows are found, `data` will be null. In that case, the user is not following.
-  if (!data) {
-    console.log(
-      `No follow relationship found for ${followerId} -> ${followingId}`
-    );
     return false;
   }
-
-  return true; // Return true if there is a follow relationship
 };
+
 
 export const getFollowCounts = async (userId: string) => {
   const { count: followersCount } = await supabase
@@ -153,5 +144,38 @@ export const getFollowedUsers = async (userId: string) => {
   } catch (e) {
     console.log("Error fetching followed users", e);
     return { success: false, msg: e };
+  }
+};
+
+export const getFollowedStories = async (loggedInUserId: string) => {
+  try {
+    // Step 1: Get the list of users the logged-in user follows
+    let { data: followedUsers, error: followError } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", loggedInUserId);
+
+    if (followError) throw followError;
+
+    // Extract just the list of followed user IDs
+    const followedUserIds = followedUsers ? followedUsers.map((user) => user.following_id) : [];
+
+    if (followedUserIds.length === 0) {
+      return []; // No followed users, so no stories to show
+    }
+
+    // Step 2: Get stories only from followed users
+    let { data: stories, error: storyError } = await supabase
+      .from("stories")
+      .select("*")
+      .in("user_id", followedUserIds)
+      .order("created_at", { ascending: true });
+
+    if (storyError) throw storyError;
+
+    return stories;
+  } catch (error) {
+    console.error("Error fetching followed stories:", error);
+    return [];
   }
 };

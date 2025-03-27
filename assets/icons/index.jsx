@@ -42,6 +42,10 @@ import saved from "./saved";
 import unSaved from "./unSaved";
 import emptyStar from "./emptyStar";
 import filledStar from "./filledStar";
+import eye from "./eye";
+import zap from "./zap";
+import zapon from "./zapon";
+import retakeCamera from "./retakeCamera";
 
 const icons = {
   home: Home,
@@ -85,6 +89,10 @@ const icons = {
   unSaved: unSaved,
   emptyStar: emptyStar,
   filledStar: filledStar,
+  eye: eye,
+  zap: zap,
+  zapon: zapon,
+  retakeCamera: retakeCamera,
 };
 
 const Icon = ({ name, ...props }) => {

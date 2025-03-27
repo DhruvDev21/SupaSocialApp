@@ -108,7 +108,7 @@ const NewUserChat = () => {
             paddingHorizontal: wp(4),
           }}
         >
-          <Header title="New Chat" />
+          <Header title="New Chat" onPress={()=>navigation.push('/(tabs)/userChatList')} />
         </View>
 
         {loading ? (

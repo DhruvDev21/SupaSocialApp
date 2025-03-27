@@ -1,12 +1,12 @@
 import * as React from "react";
 import Svg, { Path } from "react-native-svg";
 
-function close({ color = "black", strokeWidth = 2, ...props }) {
+function close({size=24, color = "black", strokeWidth = 2, ...props }) {
   return (
     <Svg
       xmlns="http://www.w3.org/2000/svg"
-      width="122.878px"
-      height="122.88px"
+      width={size}
+      height={size}
       viewBox="0 0 122.878 122.88"
       xmlSpace="preserve"
       {...props}
